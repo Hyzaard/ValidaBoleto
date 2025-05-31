@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: ValidaBoleto
+
+  datasource:
+    url:
+    username:
+    password:
+    driver-class-name:
+
+  jpa:
+    show-sql: true
