@@ -1,16 +1,20 @@
 package com.anhembi.ValidaBoleto.core.entities;
 
+import com.anhembi.ValidaBoleto.core.enuns.StatusValidacao;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record Boleto(Long id,
-                     String nome,
-                     String documento,
+                     String nomeBeneficiario,
+                     String cpfCnpjBeneficiario,
                      String endereco,
-                     String bancoDestino,
+                     String bancoEmissor,
                      String conta,
                      String agencia,
-                     String codigoDeBarras,
-                     String qrCode,
+                     String codigoDeBarra,
+                     String tipoPagamento,
+                     BigDecimal valor,
                      LocalDate dataVencimento,
-                     LocalDate dataEmissao
-) {}
+                     LocalDate dataEmissao,
+                     StatusValidacao status) {}
