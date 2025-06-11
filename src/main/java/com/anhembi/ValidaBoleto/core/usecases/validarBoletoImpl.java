@@ -1,6 +1,6 @@
 package com.anhembi.ValidaBoleto.core.usecases;
 
-public class validarBoletoImpl implements validarBoletoCase{
+public abstract class validarBoletoImpl implements validarBoletoCase{
 
     //Conferir os dados do beneficiario do boleto
     //Verificar se o codigo de barras esta no padrao certo
