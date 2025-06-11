@@ -2,9 +2,11 @@ package com.anhembi.ValidaBoleto.core.entities;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
+@Setter
 @Getter
 @Builder(toBuilder = true)
 public class Usuario {
@@ -15,3 +17,5 @@ public class Usuario {
     private String telefone;
     private List<Boleto> boletos;
 }
+
+
