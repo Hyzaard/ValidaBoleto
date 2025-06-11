@@ -1,9 +1,8 @@
 package com.anhembi.ValidaBoleto.core.usecases.boleto;
 
-import com.anhembi.ValidaBoleto.core.entities.Boleto;
+import com.anhembi.ValidaBoleto.infrastructure.dtos.ResultadoValidacaoDto;
+import com.anhembi.ValidaBoleto.infrastructure.exception.ValidacaoException;
 
-public interface ValidarBoletoCase {
-
-    public Boleto execute(Long id, String codigoDeBarra);
-
+public interface ValidarBoletoUseCase {
+    ResultadoValidacaoDto execute(String linhaDigitavel) throws ValidacaoException;
 }

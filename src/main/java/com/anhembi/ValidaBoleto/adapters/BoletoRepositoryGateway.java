@@ -1,4 +1,4 @@
-package com.anhembi.ValidaBoleto.infrastructure.gateway;
+package com.anhembi.ValidaBoleto.adapters;
 
-public class BoletoRepositoryGateway {
+public interface BoletoRepositoryGateway {
 }

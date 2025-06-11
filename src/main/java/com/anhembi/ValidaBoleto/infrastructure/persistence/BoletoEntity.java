@@ -1,122 +1,55 @@
 package com.anhembi.ValidaBoleto.infrastructure.persistence;
 
+import com.anhembi.ValidaBoleto.core.enuns.StatusValidacao;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "DADOS_BOLETO")
+@Table(name = "boletos")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class BoletoEntity {
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    // campos para o banco de dados automatico
+    @Column(name = "codigo_de_barra", nullable = false, length = 44)
+    private String codigoDeBarra;
 
-    @Column(nullable = false, unique = true)
-    private Long linhaDigitavel;
+    @Column(name = "linha_digitavel", nullable = false, length = 47)
+    private String linhaDigitavel;
 
-    @Column(nullable = false, unique = true)
-    private Long codBarras;
+    @Column(name = "nome_beneficiario", nullable = false)
+    private String nomeBeneficiario;
 
-    @Column(nullable = false)
-    private String nomeEmpresa;
+    @Column(name = "cpf_cnpj_beneficiario")
+    private String cpfCnpjBeneficiario;
 
-    @Column(nullable = false)
-    private String nomePagador;
-
-    @Column(nullable = false)
-    private Double datVencimento;
-
-    @Column(nullable = false)
+    @Column(name = "banco_emissor", nullable = false)
     private String bancoEmissor;
 
-    @Column(nullable = false)
-    private int agencia;
+    @Column(name = "codigo_do_banco")
+    private String codigoDoBanco;
 
-    @Column(nullable = false)
-    private int conta;
+    @Column(name = "valor", nullable = false, precision = 10, scale = 2)
+    private BigDecimal valor;
 
+    @Column(name = "data_vencimento", nullable = false)
+    private LocalDate dataVencimento;
 
-    public Long linhaDigitavel() {
-        return linhaDigitavel;
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private StatusValidacao status;
 
-    public BoletoEntity
-    setLinhaDigitavel(Long linhaDigitavel) {
-        this.linhaDigitavel = linhaDigitavel;
-        return this;
-    }
-
-    public Long codBarras() {
-        return codBarras;
-    }
-
-    public BoletoEntity
-    setCodBarras(Long codBarras) {
-        this.codBarras = codBarras;
-        return this;
-    }
-
-    public String nomeEmpresa() {
-        return nomeEmpresa;
-    }
-
-    public BoletoEntity
-    setNomeEmpresa(String nomeEmpresa) {
-        this.nomeEmpresa = nomeEmpresa;
-        return this;
-    }
-
-    public String nomePagador() {
-        return nomePagador;
-    }
-
-    public BoletoEntity
-    setNomePagador(String nomePagador) {
-        this.nomePagador = nomePagador;
-        return this;
-    }
-
-    public Double datVencimento() {
-        return datVencimento;
-    }
-
-    public BoletoEntity
-    setDatVencimento(Double datVencimento) {
-        this.datVencimento = datVencimento;
-        return this;
-    }
-
-    public String bancoEmissor() {
-        return bancoEmissor;
-    }
-
-    public BoletoEntity
-    setBancoEmissor(String bancoEmissor) {
-        this.bancoEmissor = bancoEmissor;
-        return this;
-    }
-
-    public int agencia() {
-        return agencia;
-    }
-
-    public BoletoEntity
-    setAgencia(int agencia) {
-        this.agencia = agencia;
-        return this;
-    }
-
-    public int conta() {
-        return conta;
-    }
-
-    public BoletoEntity
-    setConta(int conta) {
-        this.conta = conta;
-        return this;
-    }
-
-
-
-
+    @Column(name = "observacao")
+    private String observacao;
 }

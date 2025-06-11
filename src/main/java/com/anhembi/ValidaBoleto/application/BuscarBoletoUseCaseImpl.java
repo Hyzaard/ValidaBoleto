@@ -1,6 +1,8 @@
-package com.anhembi.ValidaBoleto.core.usecases.boleto;
+package com.anhembi.ValidaBoleto.application;
 
-import com.anhembi.ValidaBoleto.core.gateway.BoletoGateway;
+import com.anhembi.ValidaBoleto.adapters.BoletoGateway;
+import com.anhembi.ValidaBoleto.core.entities.Boleto;
+import com.anhembi.ValidaBoleto.core.usecases.boleto.BuscarBoletoUseCase;
 
 import java.util.List;
 

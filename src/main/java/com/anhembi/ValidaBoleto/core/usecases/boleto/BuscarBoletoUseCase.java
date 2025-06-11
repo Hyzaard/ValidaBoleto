@@ -4,7 +4,7 @@ import com.anhembi.ValidaBoleto.core.entities.Boleto;
 
 import java.util.List;
 
-public interface BuscarBoletoCase {
+public interface BuscarBoletoUseCase {
 
     public List<Boleto> execute();
 
