@@ -45,7 +45,7 @@ public class UsuarioUseCaseImpl implements UsuarioUseCase {
     }
 
     @Override
-    public Usuario atualizar(Long id, Usuario usuario) {
+    public Usuario atualizar(Long id, Usuario usuario) throws ValidacaoException {
         if (!usuarioGateway.buscarPorId(id).isPresent()) {
             throw new ValidacaoException("Usuário não encontrado");
         }
@@ -55,6 +55,9 @@ public class UsuarioUseCaseImpl implements UsuarioUseCase {
     }
 
     private void validarUsuario(Usuario usuario) throws ValidacaoException {
+        if (usuario == null) {
+            throw new ValidacaoException("Usuário não pode ser nulo");
+        }
         if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
             throw new ValidacaoException("Nome é obrigatório");
         }
@@ -63,5 +66,7 @@ public class UsuarioUseCaseImpl implements UsuarioUseCase {
         }
         if (usuarioGateway.existePorEmail(usuario.getEmail())) {
             throw new ValidacaoException("Email já cadastrado");
+        }
     }
+
 } 

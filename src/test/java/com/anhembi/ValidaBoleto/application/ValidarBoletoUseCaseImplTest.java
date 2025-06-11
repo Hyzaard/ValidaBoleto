@@ -48,7 +48,7 @@ class ValidarBoletoUseCaseImplTest {
 
     @Test
     void execute_DeveValidarBoletoComSucesso() throws ValidacaoException {
-        when(boletoGateway.buscarBoletos()).thenReturn(java.util.Collections.singletonList(boletoValido));
+        when(boletoGateway.listarTodos()).thenReturn(java.util.Collections.singletonList(boletoValido));
 
         ResultadoValidacaoDto resultado = validarBoletoUseCase.execute(linhaDigitavelValida);
 
@@ -71,7 +71,7 @@ class ValidarBoletoUseCaseImplTest {
                 .dataVencimento(LocalDate.now().minusDays(1))
                 .build();
 
-        when(boletoGateway.buscarBoletos()).thenReturn(java.util.Collections.singletonList(boletoVencido));
+        when(boletoGateway.listarTodos()).thenReturn(java.util.Collections.singletonList(boletoVencido));
 
         ResultadoValidacaoDto resultado = validarBoletoUseCase.execute(linhaDigitavelValida);
 
@@ -86,7 +86,7 @@ class ValidarBoletoUseCaseImplTest {
                 .valor(BigDecimal.ZERO)
                 .build();
 
-        when(boletoGateway.buscarBoletos()).thenReturn(java.util.Collections.singletonList(boletoValorInvalido));
+        when(boletoGateway.listarTodos()).thenReturn(java.util.Collections.singletonList(boletoValorInvalido));
 
         ResultadoValidacaoDto resultado = validarBoletoUseCase.execute(linhaDigitavelValida);
 
@@ -101,12 +101,57 @@ class ValidarBoletoUseCaseImplTest {
                 .nomeBeneficiario("AB")
                 .build();
 
-        when(boletoGateway.buscarBoletos()).thenReturn(java.util.Collections.singletonList(boletoBeneficiarioInvalido));
+        when(boletoGateway.listarTodos()).thenReturn(java.util.Collections.singletonList(boletoBeneficiarioInvalido));
 
         ResultadoValidacaoDto resultado = validarBoletoUseCase.execute(linhaDigitavelValida);
 
         assertNotNull(resultado);
         assertEquals(StatusValidacao.FRAUDULENTO, resultado.getStatus());
         assertTrue(resultado.getErros().contains("Nome do beneficiário deve ter pelo menos 3 caracteres"));
+    }
+
+    @Test
+    void execute_DeveRetornarErroQuandoBancoEmissorInvalido() throws ValidacaoException {
+        Boleto boletoBancoInvalido = boletoValido.toBuilder()
+                .bancoEmissor("999")
+                .build();
+
+        when(boletoGateway.listarTodos()).thenReturn(java.util.Collections.singletonList(boletoBancoInvalido));
+
+        ResultadoValidacaoDto resultado = validarBoletoUseCase.execute(linhaDigitavelValida);
+
+        assertNotNull(resultado);
+        assertEquals(StatusValidacao.FRAUDULENTO, resultado.getStatus());
+        assertTrue(resultado.getErros().contains("Banco emissor inválido"));
+    }
+
+    @Test
+    void execute_DeveRetornarErroQuandoCodigoDeBarraInvalido() throws ValidacaoException {
+        Boleto boletoCodigoInvalido = boletoValido.toBuilder()
+                .codigoDeBarra("123")
+                .build();
+
+        when(boletoGateway.listarTodos()).thenReturn(java.util.Collections.singletonList(boletoCodigoInvalido));
+
+        ResultadoValidacaoDto resultado = validarBoletoUseCase.execute(linhaDigitavelValida);
+
+        assertNotNull(resultado);
+        assertEquals(StatusValidacao.FRAUDULENTO, resultado.getStatus());
+        assertTrue(resultado.getErros().contains("Código de barras inválido"));
+    }
+
+    @Test
+    void execute_DeveRetornarErroQuandoCpfCnpjBeneficiarioInvalido() throws ValidacaoException {
+        Boleto boletoCpfInvalido = boletoValido.toBuilder()
+                .cpfCnpjBeneficiario("123")
+                .build();
+
+        when(boletoGateway.listarTodos()).thenReturn(java.util.Collections.singletonList(boletoCpfInvalido));
+
+        ResultadoValidacaoDto resultado = validarBoletoUseCase.execute(linhaDigitavelValida);
+
+        assertNotNull(resultado);
+        assertEquals(StatusValidacao.FRAUDULENTO, resultado.getStatus());
+        assertTrue(resultado.getErros().contains("CPF/CNPJ do beneficiário inválido"));
     }
 } 

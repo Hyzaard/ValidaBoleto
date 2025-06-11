@@ -10,5 +10,4 @@ public interface UsuarioGateway {
     List<Usuario> listarTodos();
     void deletar(Long id);
     boolean existePorEmail(String email);
-    boolean existePorCpf(String cpf);
 } 

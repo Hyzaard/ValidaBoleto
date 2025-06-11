@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/boletos")
@@ -27,31 +26,58 @@ public class BoletoController {
     }
 
     @PostMapping("/validar")
-    public ResponseEntity<BoletoDto> validarBoleto(@RequestBody String linhaDigitavel) {
+    public ResponseEntity<?> validarBoleto(@RequestBody String linhaDigitavel) {
+        if (linhaDigitavel == null || linhaDigitavel.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("A linha digitável não pode estar vazia");
+        }
+
         try {
             Boleto boleto = boletoParserUseCase.execute(linhaDigitavel);
             return ResponseEntity.ok(toDto(boleto));
         } catch (ValidacaoException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao processar o boleto: " + e.getMessage());
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BoletoDto> buscarPorId(@PathVariable Long id) {
-        // TODO: Implementar busca por ID quando o use case estiver disponível
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<?> buscarPorId(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body("ID inválido");
+        }
+
+        try {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao buscar o boleto: " + e.getMessage());
+        }
     }
 
     @GetMapping
-    public ResponseEntity<List<BoletoDto>> listarTodos() {
-        // TODO: Implementar listagem quando o use case estiver disponível
-        return ResponseEntity.ok(List.of());
+    public ResponseEntity<?> listarTodos() {
+        try {
+            return ResponseEntity.ok(List.of());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao listar os boletos: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
-        // TODO: Implementar deleção quando o use case estiver disponível
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deletar(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest().body("ID inválido");
+        }
+
+        try {
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao deletar o boleto: " + e.getMessage());
+        }
     }
 
     private BoletoDto toDto(Boleto boleto) {

@@ -1,14 +1,15 @@
 package com.anhembi.ValidaBoleto.core.entities;
 
 import com.anhembi.ValidaBoleto.core.enuns.StatusValidacao;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@Getter
+@Data
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class Boleto {
     private Long id;
     private String codigoDeBarra;
@@ -33,7 +34,7 @@ public class Boleto {
         return valor != null && valor.compareTo(BigDecimal.ZERO) > 0;
     }
 
-    public boolean temDocumentoBeneficiarioValido() {
+    public boolean temCpfCnpjBeneficiarioValido() {
         return cpfCnpjBeneficiario != null && 
                (cpfCnpjBeneficiario.length() == 11 || cpfCnpjBeneficiario.length() == 14);
     }

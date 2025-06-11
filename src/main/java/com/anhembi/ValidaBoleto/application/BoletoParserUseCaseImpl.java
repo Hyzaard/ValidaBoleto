@@ -20,8 +20,8 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
     private static final LocalDate DATA_BASE_FATOR_VENCIMENTO = LocalDate.of(1997, 10, 7);
 
     @Autowired
-    public BoletoParserUseCaseImpl(BoletoParserGateway boletoGateway){
-        this.boletoParserGateway = boletoGateway;
+    public BoletoParserUseCaseImpl(BoletoParserGateway boletoParserGateway) {
+        this.boletoParserGateway = boletoParserGateway;
     }
 
     @Override
@@ -41,52 +41,51 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
         BigDecimal valor = new BigDecimal(codigoDeBarras.substring(9, 19)).divide(new BigDecimal(100));
         LocalDate dataVencimento = DATA_BASE_FATOR_VENCIMENTO.plus(fatorVencimento, ChronoUnit.DAYS);
 
-        return Boleto.builder()
-                .linhaDigitavel(linhaDigitavel)
-                .codigoDeBarra(codigoDeBarras)
+        Boleto boleto = boletoParserGateway.parse(linhaDigitavel);
+        return boleto.toBuilder()
                 .bancoEmissor(banco)
-                .dataVencimento(dataVencimento)
                 .valor(valor)
+                .dataVencimento(dataVencimento)
                 .build();
     }
 
-    private String construirCodigoDeBarras(String ld) {
+    private String construirCodigoDeBarras(String linhaDigitavel) {
         return new StringBuilder()
-                .append(ld, 0, 4)       // Campo 1: Banco e Moeda
-                .append(ld, 32, 47)  // Campo 5: Fator de Vencimento e Valor
-                .append(ld, 4, 9)       // Campo 2: Parte do campo livre
-                .append(ld, 10, 20)  // Campo 3: Parte do campo livre
-                .append(ld, 21, 31)  // Campo 4: Parte do campo livre
+                .append(linhaDigitavel, 0, 4)    // Campo 1: Banco e Moeda
+                .append(linhaDigitavel, 32, 47)  // Campo 5: Fator de Vencimento e Valor
+                .append(linhaDigitavel, 4, 9)    // Campo 2: Parte do campo livre
+                .append(linhaDigitavel, 10, 20)  // Campo 3: Parte do campo livre
+                .append(linhaDigitavel, 21, 31)  // Campo 4: Parte do campo livre
                 .toString();
     }
 
     private void validarDigitosVerificadoresCampos(String linhaDigitavel) throws ValidacaoException {
         String campo1 = linhaDigitavel.substring(0, 9);
-        int dv1 = Integer.parseInt(linhaDigitavel.substring(9, 10));
-        if (DigitoVerificador.calcularMod10(campo1) != dv1) {
+        int digitoVerificadorCampo1 = Integer.parseInt(linhaDigitavel.substring(9, 10));
+        if (DigitoVerificador.calcularMod10(campo1) != digitoVerificadorCampo1) {
             throw new ValidacaoException("Dígito verificador do campo 1 é inválido.");
         }
 
         String campo2 = linhaDigitavel.substring(10, 20);
-        int dv2 = Integer.parseInt(linhaDigitavel.substring(20, 21));
-        if (DigitoVerificador.calcularMod10(campo2) != dv2) {
+        int digitoVerificadorCampo2 = Integer.parseInt(linhaDigitavel.substring(20, 21));
+        if (DigitoVerificador.calcularMod10(campo2) != digitoVerificadorCampo2) {
             throw new ValidacaoException("Dígito verificador do campo 2 é inválido.");
         }
 
         String campo3 = linhaDigitavel.substring(21, 31);
-        int dv3 = Integer.parseInt(linhaDigitavel.substring(31, 32));
-        if (DigitoVerificador.calcularMod10(campo3) != dv3) {
+        int digitoVerificadorCampo3 = Integer.parseInt(linhaDigitavel.substring(31, 32));
+        if (DigitoVerificador.calcularMod10(campo3) != digitoVerificadorCampo3) {
             throw new ValidacaoException("Dígito verificador do campo 3 é inválido.");
         }
     }
 
     private void validarDigitoVerificadorGeral(String codigoDeBarras) throws ValidacaoException {
-        char dvGeral = codigoDeBarras.charAt(4);
+        char digitoVerificadorGeral = codigoDeBarras.charAt(4);
         String dadosParaCalculo = codigoDeBarras.substring(0, 4) + codigoDeBarras.substring(5);
 
-        int dvCalculado = DigitoVerificador.calcularMod11(dadosParaCalculo);
+        int digitoVerificadorCalculado = DigitoVerificador.calcularMod11(dadosParaCalculo);
 
-        if (dvCalculado != Character.getNumericValue(dvGeral)) {
+        if (digitoVerificadorCalculado != Character.getNumericValue(digitoVerificadorGeral)) {
             throw new ValidacaoException("Dígito verificador geral do código de barras é inválido.");
         }
     }

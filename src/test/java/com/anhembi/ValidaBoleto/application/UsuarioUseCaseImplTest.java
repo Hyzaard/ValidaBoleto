@@ -34,7 +34,6 @@ class UsuarioUseCaseImplTest {
         usuario = Usuario.builder()
                 .nome("Teste Usuario")
                 .email("teste@email.com")
-                .cpf("12345678900")
                 .build();
     }
 
@@ -55,6 +54,27 @@ class UsuarioUseCaseImplTest {
     void criar_DeveLancarExcecaoQuandoEmailJaExiste() {
         when(usuarioGateway.existePorEmail(any())).thenReturn(true);
 
+        assertThrows(ValidacaoException.class, () -> usuarioUseCase.criar(usuario));
+        verify(usuarioGateway, never()).salvar(any());
+    }
+
+    @Test
+    void criar_DeveLancarExcecaoQuandoNomeNulo() {
+        usuario = usuario.toBuilder().nome(null).build();
+        assertThrows(ValidacaoException.class, () -> usuarioUseCase.criar(usuario));
+        verify(usuarioGateway, never()).salvar(any());
+    }
+
+    @Test
+    void criar_DeveLancarExcecaoQuandoEmailNulo() {
+        usuario = usuario.toBuilder().email(null).build();
+        assertThrows(ValidacaoException.class, () -> usuarioUseCase.criar(usuario));
+        verify(usuarioGateway, never()).salvar(any());
+    }
+
+    @Test
+    void criar_DeveLancarExcecaoQuandoEmailInvalido() {
+        usuario = usuario.toBuilder().email("emailinvalido").build();
         assertThrows(ValidacaoException.class, () -> usuarioUseCase.criar(usuario));
         verify(usuarioGateway, never()).salvar(any());
     }
@@ -115,6 +135,39 @@ class UsuarioUseCaseImplTest {
     void atualizar_DeveLancarExcecaoQuandoUsuarioNaoEncontrado() {
         when(usuarioGateway.buscarPorId(1L)).thenReturn(Optional.empty());
 
+        assertThrows(ValidacaoException.class, () -> usuarioUseCase.atualizar(1L, usuario));
+        verify(usuarioGateway, never()).salvar(any());
+    }
+
+    @Test
+    void atualizar_DeveLancarExcecaoQuandoEmailJaExiste() {
+        when(usuarioGateway.buscarPorId(1L)).thenReturn(Optional.of(usuario));
+        when(usuarioGateway.existePorEmail(any())).thenReturn(true);
+
+        assertThrows(ValidacaoException.class, () -> usuarioUseCase.atualizar(1L, usuario));
+        verify(usuarioGateway, never()).salvar(any());
+    }
+
+    @Test
+    void atualizar_DeveLancarExcecaoQuandoNomeNulo() {
+        when(usuarioGateway.buscarPorId(1L)).thenReturn(Optional.of(usuario));
+        usuario = usuario.toBuilder().nome(null).build();
+        assertThrows(ValidacaoException.class, () -> usuarioUseCase.atualizar(1L, usuario));
+        verify(usuarioGateway, never()).salvar(any());
+    }
+
+    @Test
+    void atualizar_DeveLancarExcecaoQuandoEmailNulo() {
+        when(usuarioGateway.buscarPorId(1L)).thenReturn(Optional.of(usuario));
+        usuario = usuario.toBuilder().email(null).build();
+        assertThrows(ValidacaoException.class, () -> usuarioUseCase.atualizar(1L, usuario));
+        verify(usuarioGateway, never()).salvar(any());
+    }
+
+    @Test
+    void atualizar_DeveLancarExcecaoQuandoEmailInvalido() {
+        when(usuarioGateway.buscarPorId(1L)).thenReturn(Optional.of(usuario));
+        usuario = usuario.toBuilder().email("emailinvalido").build();
         assertThrows(ValidacaoException.class, () -> usuarioUseCase.atualizar(1L, usuario));
         verify(usuarioGateway, never()).salvar(any());
     }

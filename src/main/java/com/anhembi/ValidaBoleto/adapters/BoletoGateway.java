@@ -3,9 +3,12 @@ package com.anhembi.ValidaBoleto.adapters;
 import com.anhembi.ValidaBoleto.core.entities.Boleto;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BoletoGateway {
-
-    Boleto criarBoleto(Boleto boleto);
-    List<Boleto> buscarBoletos();
+    Boleto salvar(Boleto boleto);
+    Optional<Boleto> buscarPorId(Long id);
+    List<Boleto> listarTodos();
+    void deletar(Long id);
+    Boleto atualizar(Long id, Boleto boleto);
 }

@@ -3,6 +3,7 @@ package com.anhembi.ValidaBoleto.application;
 import com.anhembi.ValidaBoleto.adapters.BoletoGateway;
 import com.anhembi.ValidaBoleto.core.entities.Boleto;
 import com.anhembi.ValidaBoleto.core.enuns.StatusValidacao;
+import com.anhembi.ValidaBoleto.core.usecases.boleto.BoletoParserUseCase;
 import com.anhembi.ValidaBoleto.core.usecases.boleto.ValidarBoletoUseCase;
 import com.anhembi.ValidaBoleto.infrastructure.dtos.ResultadoValidacaoDto;
 import com.anhembi.ValidaBoleto.infrastructure.exception.ValidacaoException;
@@ -13,17 +14,19 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
 
     private final BoletoGateway boletoGateway;
+    private final BoletoParserUseCase boletoParserUseCase;
 
     @Autowired
     public ValidarBoletoUseCaseImpl(
-            BoletoGateway boletoGateway) {
+            BoletoGateway boletoGateway,
+            BoletoParserUseCase boletoParserUseCase) {
         this.boletoGateway = boletoGateway;
+        this.boletoParserUseCase = boletoParserUseCase;
     }
 
     @Override
@@ -39,15 +42,10 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
                 throw new ValidacaoException("A linha digitável deve conter 47 dígitos numéricos.");
             }
 
-            // Cria um novo boleto com a linha digitável
-            Boleto boleto = Boleto.builder()
-                    .linhaDigitavel(linhaDigitavelNumerica)
-                    .build();
+            // Usa o BoletoParserUseCase para validar e extrair informações do boleto
+            Boleto boleto = boletoParserUseCase.execute(linhaDigitavelNumerica);
 
-            // Validações básicas
-            validarCamposObrigatorios(boleto, erros);
-            validarCodigoDeBarra(boleto, erros);
-            validarLinhaDigitavel(boleto, erros);
+            // Validações adicionais
             validarDataVencimento(boleto, avisos);
             validarValor(boleto, erros);
             validarBeneficiario(boleto, erros);
@@ -90,47 +88,6 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
         }
     }
 
-    private void validarCamposObrigatorios(Boleto boleto, List<String> erros) {
-        if (boleto.getCodigoDeBarra() == null || boleto.getCodigoDeBarra().trim().isEmpty()) {
-            erros.add("Código de barras é obrigatório");
-        }
-        if (boleto.getLinhaDigitavel() == null || boleto.getLinhaDigitavel().trim().isEmpty()) {
-            erros.add("Linha digitável é obrigatória");
-        }
-        if (boleto.getNomeBeneficiario() == null || boleto.getNomeBeneficiario().trim().isEmpty()) {
-            erros.add("Nome do beneficiário é obrigatório");
-        }
-        if (boleto.getBancoEmissor() == null || boleto.getBancoEmissor().trim().isEmpty()) {
-            erros.add("Banco emissor é obrigatório");
-        }
-        if (boleto.getValor() == null) {
-            erros.add("Valor é obrigatório");
-        }
-        if (boleto.getDataVencimento() == null) {
-            erros.add("Data de vencimento é obrigatória");
-        }
-    }
-
-    private void validarCodigoDeBarra(Boleto boleto, List<String> erros) {
-        String codigo = boleto.getCodigoDeBarra().replaceAll("[^0-9]", "");
-        if (codigo.length() != 44) {
-            erros.add("Código de barras deve conter 44 dígitos");
-        }
-        if (!validarDigitoVerificador(codigo)) {
-            erros.add("Código de barras inválido");
-        }
-    }
-
-    private void validarLinhaDigitavel(Boleto boleto, List<String> erros) {
-        String linha = boleto.getLinhaDigitavel().replaceAll("[^0-9]", "");
-        if (linha.length() != 47) {
-            erros.add("Linha digitável deve conter 47 dígitos");
-        }
-        if (!validarDigitoVerificador(linha)) {
-            erros.add("Linha digitável inválida");
-        }
-    }
-
     private void validarDataVencimento(Boleto boleto, List<String> avisos) {
         LocalDate hoje = LocalDate.now();
         if (boleto.getDataVencimento() != null && boleto.getDataVencimento().isBefore(hoje)) {
@@ -152,7 +109,7 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
 
     private void validarBancoEmissor(Boleto boleto, List<String> erros) {
         if (boleto.getBancoEmissor() != null && boleto.getBancoEmissor().length() < 3) {
-            erros.add("Nome do banco emissor deve ter pelo menos 3 caracteres");
+            erros.add("Código do banco emissor deve ter pelo menos 3 caracteres");
         }
     }
 
@@ -169,26 +126,17 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
     private String gerarRecomendacao(StatusValidacao status, List<String> avisos, List<String> erros) {
         switch (status) {
             case VALIDO:
-                return "Boleto válido e seguro para pagamento.";
+                return "Boleto válido para pagamento.";
             case SUSPEITO:
-                return "Boleto válido, mas com observações: " + String.join(", ", avisos);
+                return "Boleto válido, mas com observações: " +
+                       "Conferir os dados do beneficiário do boleto, " +
+                       "verifique se a impressão do boleto foi feita pelas vias oficiais, " +
+                       "não negocie com estranhos e se estiver com dúvidas entre em contato com a empresa que emitiu o boleto. " +
+                       String.join(", ", avisos);
             case FRAUDULENTO:
                 return "Boleto inválido: " + String.join(", ", erros);
             default:
                 return "Status de validação desconhecido.";
         }
-    }
-
-    private boolean validarDigitoVerificador(String codigo) {
-        int soma = 0;
-        int peso = 2;
-        for (int i = codigo.length() - 2; i >= 0; i--) {
-            int digito = Character.getNumericValue(codigo.charAt(i));
-            soma += digito * peso;
-            peso = peso == 9 ? 2 : peso + 1;
-        }
-        int resto = soma % 11;
-        int dv = resto < 2 ? 0 : 11 - resto;
-        return dv == Character.getNumericValue(codigo.charAt(codigo.length() - 1));
     }
 }

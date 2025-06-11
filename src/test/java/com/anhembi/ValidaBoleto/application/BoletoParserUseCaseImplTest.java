@@ -44,7 +44,7 @@ class BoletoParserUseCaseImplTest {
                 .dataVencimento(LocalDate.now().plusDays(10))
                 .build();
 
-        when(boletoParserGateway.execute(any())).thenReturn(boletoEsperado);
+        when(boletoParserGateway.parse(any())).thenReturn(boletoEsperado);
 
         Boleto resultado = boletoParserUseCase.execute(linhaDigitavelValida);
 
@@ -61,7 +61,7 @@ class BoletoParserUseCaseImplTest {
         String linhaDigitavelInvalida = "12345"; // Linha digitável muito curta
 
         assertThrows(ValidacaoException.class, () -> boletoParserUseCase.execute(linhaDigitavelInvalida));
-        verify(boletoParserGateway, never()).execute(any());
+        verify(boletoParserGateway, never()).parse(any());
     }
 
     @Test
@@ -70,7 +70,7 @@ class BoletoParserUseCaseImplTest {
         String linhaDigitavelDigitoInvalido = "34191.12345 67890.101112 13141.516171 9 12345678901234";
 
         assertThrows(ValidacaoException.class, () -> boletoParserUseCase.execute(linhaDigitavelDigitoInvalido));
-        verify(boletoParserGateway, never()).execute(any());
+        verify(boletoParserGateway, never()).parse(any());
     }
 
     @Test
@@ -79,6 +79,6 @@ class BoletoParserUseCaseImplTest {
         String linhaDigitavelCodigoInvalido = "34191.12345 67890.101112 13141.516171 8 12345678901235";
 
         assertThrows(ValidacaoException.class, () -> boletoParserUseCase.execute(linhaDigitavelCodigoInvalido));
-        verify(boletoParserGateway, never()).execute(any());
+        verify(boletoParserGateway, never()).parse(any());
     }
 } 
