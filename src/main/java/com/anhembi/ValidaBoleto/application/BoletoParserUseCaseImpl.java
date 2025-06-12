@@ -26,11 +26,17 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
 
     @Override
     public Boleto execute(String linhaDigitavel) throws ValidacaoException {
+        // Remove caracteres não numéricos
+        String linhaDigitavelNumerica = linhaDigitavel.replaceAll("[^0-9]", "");
+        if (linhaDigitavelNumerica.length() != 47) {
+            throw new ValidacaoException("A linha digitável deve conter 47 dígitos numéricos.");
+        }
+
         // Validação dos dígitos verificadores dos campos
-        validarDigitosVerificadoresCampos(linhaDigitavel);
+        validarDigitosVerificadoresCampos(linhaDigitavelNumerica);
 
         // Reconstrói o código de barras a partir da linha digitável
-        String codigoDeBarras = construirCodigoDeBarras(linhaDigitavel);
+        String codigoDeBarras = construirCodigoDeBarras(linhaDigitavelNumerica);
 
         // Valida o dígito verificador geral do código de barras
         validarDigitoVerificadorGeral(codigoDeBarras);
@@ -41,7 +47,7 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
         BigDecimal valor = new BigDecimal(codigoDeBarras.substring(9, 19)).divide(new BigDecimal(100));
         LocalDate dataVencimento = DATA_BASE_FATOR_VENCIMENTO.plus(fatorVencimento, ChronoUnit.DAYS);
 
-        Boleto boleto = boletoParserGateway.parse(linhaDigitavel);
+        Boleto boleto = boletoParserGateway.parse(linhaDigitavelNumerica);
         return boleto.toBuilder()
                 .bancoEmissor(banco)
                 .valor(valor)

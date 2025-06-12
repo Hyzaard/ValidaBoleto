@@ -64,6 +64,11 @@ public class UsuarioUseCaseImpl implements UsuarioUseCase {
         if (usuario.getEmail() == null || usuario.getEmail().trim().isEmpty()) {
             throw new ValidacaoException("Email é obrigatório");
         }
+        // Validação de formato de e-mail
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        if (!usuario.getEmail().matches(emailRegex)) {
+            throw new ValidacaoException("Email inválido");
+        }
         if (usuarioGateway.existePorEmail(usuario.getEmail())) {
             throw new ValidacaoException("Email já cadastrado");
         }
