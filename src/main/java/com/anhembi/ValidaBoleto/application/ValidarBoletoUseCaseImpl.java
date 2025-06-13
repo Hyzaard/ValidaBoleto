@@ -40,6 +40,10 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {    priva
             Boleto boleto = boletoParserUseCase.execute(linhaDigitavelNumerica);
 
             // Validações adicionais
+            validarDVs(linhaDigitavelNumerica, boleto, erros);
+            validarCodigoDeBarras(boleto, erros);
+            validarBancoEmissorOficial(boleto, erros);
+            validarDataVencimento(boleto, erros);
             validarValor(boleto, erros, avisos);
             validarBancoEmissor(boleto, erros);
 
@@ -119,6 +123,78 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {    priva
                 return "Boleto inválido: " + String.join(", ", erros);
             default:
                 return "Status de validação desconhecido.";
+        }
+    }
+
+    // Validação dos dígitos verificadores (DV) da linha digitável e do código de barras
+    private void validarDVs(String linhaDigitavel, Boleto boleto, List<String> erros) {
+        // Exemplo simplificado: cheque se o DV geral do código de barras bate
+        // (Implementação real depende do padrão Febraban, aqui é um placeholder)
+        if (boleto.getCodigoDeBarra() != null && boleto.getCodigoDeBarra().length() == 44) {
+            char dvCalculado = calcularDVBarra(boleto.getCodigoDeBarra());
+            char dvInformado = boleto.getCodigoDeBarra().charAt(4);
+            if (dvCalculado != dvInformado) {
+                erros.add("Dígito verificador do código de barras inválido");
+            }
+        }
+        // (Opcional) Validar DVs dos campos da linha digitável
+    }
+
+    // Placeholder para cálculo do DV do código de barras (módulo 11 simplificado)
+    private char calcularDVBarra(String codigoDeBarra) {
+        int soma = 0;
+        int peso = 2;
+        for (int i = 43; i >= 0; i--) {
+            if (i == 4) continue; // Pula o DV
+            soma += Character.getNumericValue(codigoDeBarra.charAt(i)) * peso;
+            peso = (peso == 9) ? 2 : peso + 1;
+        }
+        int resto = soma % 11;
+        int dv = 11 - resto;
+        if (dv == 0 || dv == 10 || dv == 11) dv = 1;
+        return Character.forDigit(dv, 10);
+    }
+
+    // Validação do código de barras (estrutura)
+    private void validarCodigoDeBarras(Boleto boleto, List<String> erros) {
+        String barra = boleto.getCodigoDeBarra();
+        if (barra == null || barra.length() != 44) {
+            erros.add("Código de barras inválido ou com tamanho incorreto");
+        }
+        // (Opcional) Validar prefixos e campos fixos
+    }
+
+    // Validação do banco emissor na lista oficial (simplificado)
+    private void validarBancoEmissorOficial(Boleto boleto, List<String> erros) {
+        String banco = boleto.getBancoEmissor();
+        if (banco == null || banco.length() != 3) {
+            erros.add("Código do banco emissor inválido");
+            return;
+        }
+        // Lista simplificada dos principais bancos
+        String[] bancosOficiais = {"001", "033", "104", "237", "341", "356", "399", "422", "745"};
+        boolean encontrado = false;
+        for (String b : bancosOficiais) {
+            if (banco.equals(b)) {
+                encontrado = true;
+                break;
+            }
+        }
+        if (!encontrado) {
+            erros.add("Banco emissor não consta na lista oficial Febraban");
+        }
+    }
+
+    // Validação da data de vencimento (antiga ou muito futura)
+    private void validarDataVencimento(Boleto boleto, List<String> erros) {
+        if (boleto.getDataVencimento() != null) {
+            LocalDate hoje = LocalDate.now();
+            if (boleto.getDataVencimento().isBefore(hoje.minusYears(1))) {
+                erros.add("Data de vencimento muito antiga");
+            }
+            if (boleto.getDataVencimento().isAfter(hoje.plusYears(2))) {
+                erros.add("Data de vencimento muito distante no futuro");
+            }
         }
     }
 }
