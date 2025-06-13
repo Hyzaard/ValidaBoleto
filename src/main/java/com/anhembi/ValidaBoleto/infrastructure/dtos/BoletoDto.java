@@ -14,15 +14,13 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BoletoDto {
-    private Long id;
     private String codigoDeBarra;
-    private String linhaDigitavel;
     private String nomeBeneficiario;
-    private String cpfCnpjBeneficiario;
     private String bancoEmissor;
-    private String codigoDoBanco;
     private BigDecimal valor;
     private LocalDate dataVencimento;
     private StatusValidacao status;
-    private String observacoes;
-} 
+    private java.util.List<String> avisos;
+    private java.util.List<String> erros;
+    private String recomendacao;
+}

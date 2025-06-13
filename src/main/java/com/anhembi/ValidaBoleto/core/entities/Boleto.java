@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder(toBuilder = true)
@@ -21,6 +22,9 @@ public class Boleto {
     private BigDecimal valor;
     private LocalDate dataVencimento;
     private StatusValidacao status;
+    private List<String> avisos;
+    private List<String> erros;
+    private String recomendacao;
 
     public boolean isVencido() {
         return dataVencimento != null && dataVencimento.isBefore(LocalDate.now());

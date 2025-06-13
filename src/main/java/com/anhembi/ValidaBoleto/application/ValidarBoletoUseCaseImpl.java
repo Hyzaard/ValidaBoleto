@@ -8,6 +8,7 @@ import com.anhembi.ValidaBoleto.core.usecases.boleto.ValidarBoletoUseCase;
 import com.anhembi.ValidaBoleto.infrastructure.dtos.ResultadoValidacaoDto;
 import com.anhembi.ValidaBoleto.infrastructure.exception.ValidacaoException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,21 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
+public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {    private final BoletoParserUseCase boletoParserUseCase;
 
-    private final BoletoGateway boletoGateway;
-    private final BoletoParserUseCase boletoParserUseCase;
-
-    @Autowired
-    public ValidarBoletoUseCaseImpl(
-            BoletoGateway boletoGateway,
-            BoletoParserUseCase boletoParserUseCase) {
-        this.boletoGateway = boletoGateway;
+    public ValidarBoletoUseCaseImpl(BoletoParserUseCase boletoParserUseCase) {
         this.boletoParserUseCase = boletoParserUseCase;
     }
 
     @Override
-    public ResultadoValidacaoDto execute(String linhaDigitavel) {
+    public Boleto validacao(String linhaDigitavel) {
         List<String> avisos = new ArrayList<>();
         List<String> erros = new ArrayList<>();
 
@@ -46,9 +40,7 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
             Boleto boleto = boletoParserUseCase.execute(linhaDigitavelNumerica);
 
             // Validações adicionais
-            validarDataVencimento(boleto, avisos);
-            validarValor(boleto, erros);
-            validarBeneficiario(boleto, erros);
+            validarValor(boleto, erros, avisos);
             validarBancoEmissor(boleto, erros);
 
             // Determina status e nível de risco
@@ -57,8 +49,8 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
             // Gera recomendação
             String recomendacao = gerarRecomendacao(status, avisos, erros);
 
-            return ResultadoValidacaoDto.builder()
-                    .codigoDeBarras(boleto.getCodigoDeBarra())
+            return Boleto.builder()
+                    .codigoDeBarra(boleto.getCodigoDeBarra())
                     .status(status)
                     .avisos(avisos)
                     .erros(erros)
@@ -71,7 +63,7 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
 
         } catch (ValidacaoException e) {
             erros.add("Erro na validação: " + e.getMessage());
-            return ResultadoValidacaoDto.builder()
+            return Boleto.builder()
                     .status(StatusValidacao.FRAUDULENTO)
                     .avisos(avisos)
                     .erros(erros)
@@ -79,7 +71,7 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
                     .build();
         } catch (Exception e) {
             erros.add("Ocorreu um erro inesperado durante a validação.");
-            return ResultadoValidacaoDto.builder()
+            return Boleto.builder()
                     .status(StatusValidacao.FRAUDULENTO)
                     .avisos(avisos)
                     .erros(erros)
@@ -88,22 +80,12 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {
         }
     }
 
-    private void validarDataVencimento(Boleto boleto, List<String> avisos) {
-        LocalDate hoje = LocalDate.now();
-        if (boleto.getDataVencimento() != null && boleto.getDataVencimento().isBefore(hoje)) {
-            avisos.add("Boleto vencido");
-        }
-    }
-
-    private void validarValor(Boleto boleto, List<String> erros) {
+    private void validarValor(Boleto boleto, List<String> erros, List<String> avisos) {
         if (boleto.getValor() != null && boleto.getValor().compareTo(BigDecimal.ZERO) <= 0) {
             erros.add("Valor deve ser maior que zero");
         }
-    }
-
-    private void validarBeneficiario(Boleto boleto, List<String> erros) {
-        if (boleto.getNomeBeneficiario() != null && boleto.getNomeBeneficiario().length() < 3) {
-            erros.add("Nome do beneficiário deve ter pelo menos 3 caracteres");
+        if (boleto.getValor() != null && boleto.getValor().compareTo(new BigDecimal("10000")) > 0) {
+            avisos.add("Valor do boleto acima do normal");
         }
     }
 

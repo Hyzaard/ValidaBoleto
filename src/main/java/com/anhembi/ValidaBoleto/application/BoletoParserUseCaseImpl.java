@@ -35,41 +35,54 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
         String linhaDigitavelNumerica = linhaDigitavel.replaceAll("[^0-9]", "");
         
         // Validação do tamanho
-        if (linhaDigitavelNumerica.length() != 47) {
-            throw new ValidacaoException("A linha digitável deve conter 47 dígitos numéricos.");
+        int length = linhaDigitavelNumerica.length();
+        if (length < 47 || length > 54) {
+            throw new ValidacaoException(
+                    "A linha digitável deve conter entre 47 e 54 dígitos numéricos.");
         }
 
-        // Validação dos dígitos verificadores dos campos
-        validarDigitosVerificadoresCampos(linhaDigitavelNumerica);
-
         // Reconstrói o código de barras a partir da linha digitável
-        String codigoDeBarras = construirCodigoDeBarras(linhaDigitavelNumerica);
+        String codigoDeBarra = construirCodigoDeBarra(linhaDigitavelNumerica);
+        System.out.println("[DEBUG] Codigo de Barras: " + codigoDeBarra);
+        String fatorStr = codigoDeBarra.substring(5, 9);
+        System.out.println("[DEBUG] Fator de Vencimento extraído: " + fatorStr);
 
-        // Valida o dígito verificador geral do código de barras
-        validarDigitoVerificadorGeral(codigoDeBarras);
+        LocalDate dataVencimento = null;
+        if (!"0000".equals(fatorStr)) {
+            int fatorVencimento = Integer.parseInt(fatorStr);
+            dataVencimento = DATA_BASE_FATOR_VENCIMENTO.plusDays(fatorVencimento);
+            System.out.println("[DEBUG] Data de Vencimento calculada: " + dataVencimento);
+        } else {
+            System.out.println("[DEBUG] Boleto sem data de vencimento (fator 0000)");
+        }
 
-        // Extrai as informações do código de barras
-        String banco = codigoDeBarras.substring(0, 3);
-        int fatorVencimento = Integer.parseInt(codigoDeBarras.substring(5, 9));
-        BigDecimal valor = new BigDecimal(codigoDeBarras.substring(9, 19)).divide(new BigDecimal(100));
-        LocalDate dataVencimento = DATA_BASE_FATOR_VENCIMENTO.plus(fatorVencimento, ChronoUnit.DAYS);
-
+        BigDecimal valor = new BigDecimal(codigoDeBarra.substring(9, 19)).divide(new BigDecimal(100));
         Boleto boleto = boletoParserGateway.parse(linhaDigitavelNumerica);
         return boleto.toBuilder()
-                .bancoEmissor(banco)
+                .codigoDeBarra(codigoDeBarra)
+                .bancoEmissor(codigoDeBarra.substring(0, 3))
                 .valor(valor)
                 .dataVencimento(dataVencimento)
                 .build();
     }
 
-    private String construirCodigoDeBarras(String linhaDigitavel) {
+    private String construirCodigoDeBarra(String linhaDigitavel) {
+        // Padrão Febraban para boletos bancários (47 dígitos):
+        // 0-3: banco/moeda
+        // 4: dígito verificador geral
+        // 5-8: fator de vencimento
+        // 9-18: valor
+        // 19-43: campo livre
+        // Montagem: 0-3 + 32 + 33-36 + 37-46 + 4-8 + 10-19 + 21-30
         return new StringBuilder()
-                .append(linhaDigitavel, 0, 4)    // Campo 1: Banco e Moeda
-                .append(linhaDigitavel, 32, 47)  // Campo 5: Fator de Vencimento e Valor
-                .append(linhaDigitavel, 4, 9)    // Campo 2: Parte do campo livre
-                .append(linhaDigitavel, 10, 20)  // Campo 3: Parte do campo livre
-                .append(linhaDigitavel, 21, 31)  // Campo 4: Parte do campo livre
-                .toString();
+            .append(linhaDigitavel, 0, 4)    // banco e moeda
+            .append(linhaDigitavel, 32, 33)  // dígito verificador geral
+            .append(linhaDigitavel, 33, 37)  // fator de vencimento
+            .append(linhaDigitavel, 37, 47)  // valor
+            .append(linhaDigitavel, 4, 9)    // campo livre parte 1
+            .append(linhaDigitavel, 10, 20)  // campo livre parte 2
+            .append(linhaDigitavel, 21, 31)  // campo livre parte 3
+            .toString();
     }
 
     private void validarDigitosVerificadoresCampos(String linhaDigitavel) throws ValidacaoException {
@@ -87,7 +100,7 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
         String campo2 = linhaDigitavel.substring(10, 20);
         int digitoVerificadorCampo2 = Integer.parseInt(linhaDigitavel.substring(20, 21));
         int digitoCalculadoCampo2 = DigitoVerificador.modulo10(campo2);
-        if (digitoCalculadoCampo2 != digitoVerificadorCampo2) {
+          if (digitoCalculadoCampo2 != digitoVerificadorCampo2) {
             throw new ValidacaoException(String.format(
                 "Dígito verificador do campo 2 é inválido. Esperado: %d, Calculado: %d, Campo: %s, Linha completa: %s",
                 digitoVerificadorCampo2, digitoCalculadoCampo2, campo2, linhaDigitavel));
