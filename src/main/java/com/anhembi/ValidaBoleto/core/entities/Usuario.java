@@ -1,14 +1,16 @@
 package com.anhembi.ValidaBoleto.core.entities;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Setter
-@Getter
+@Data
 @Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
 public class Usuario {
     private Long id;
     private String nome;

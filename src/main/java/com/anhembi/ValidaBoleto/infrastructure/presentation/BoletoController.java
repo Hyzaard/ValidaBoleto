@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/boletos")
+@RequestMapping("/boletos")
 public class BoletoController {
 
     private final BoletoParserUseCase boletoParserUseCase;

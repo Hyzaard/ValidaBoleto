@@ -26,8 +26,15 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
 
     @Override
     public Boleto execute(String linhaDigitavel) throws ValidacaoException {
+        // Validação inicial do formato
+        if (linhaDigitavel == null || linhaDigitavel.trim().isEmpty()) {
+            throw new ValidacaoException("A linha digitável não pode estar vazia");
+        }
+
         // Remove caracteres não numéricos
         String linhaDigitavelNumerica = linhaDigitavel.replaceAll("[^0-9]", "");
+        
+        // Validação do tamanho
         if (linhaDigitavelNumerica.length() != 47) {
             throw new ValidacaoException("A linha digitável deve conter 47 dígitos numéricos.");
         }
@@ -66,22 +73,34 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
     }
 
     private void validarDigitosVerificadoresCampos(String linhaDigitavel) throws ValidacaoException {
+        // Campo 1: posições 1-9, dígito 10
         String campo1 = linhaDigitavel.substring(0, 9);
         int digitoVerificadorCampo1 = Integer.parseInt(linhaDigitavel.substring(9, 10));
-        if (DigitoVerificador.calcularMod10(campo1) != digitoVerificadorCampo1) {
-            throw new ValidacaoException("Dígito verificador do campo 1 é inválido.");
+        int digitoCalculadoCampo1 = DigitoVerificador.modulo10(campo1);
+        if (digitoCalculadoCampo1 != digitoVerificadorCampo1) {
+            throw new ValidacaoException(String.format(
+                "Dígito verificador do campo 1 é inválido. Esperado: %d, Calculado: %d, Campo: %s, Linha completa: %s",
+                digitoVerificadorCampo1, digitoCalculadoCampo1, campo1, linhaDigitavel));
         }
 
+        // Campo 2: posições 11-20, dígito 21
         String campo2 = linhaDigitavel.substring(10, 20);
         int digitoVerificadorCampo2 = Integer.parseInt(linhaDigitavel.substring(20, 21));
-        if (DigitoVerificador.calcularMod10(campo2) != digitoVerificadorCampo2) {
-            throw new ValidacaoException("Dígito verificador do campo 2 é inválido.");
+        int digitoCalculadoCampo2 = DigitoVerificador.modulo10(campo2);
+        if (digitoCalculadoCampo2 != digitoVerificadorCampo2) {
+            throw new ValidacaoException(String.format(
+                "Dígito verificador do campo 2 é inválido. Esperado: %d, Calculado: %d, Campo: %s, Linha completa: %s",
+                digitoVerificadorCampo2, digitoCalculadoCampo2, campo2, linhaDigitavel));
         }
 
+        // Campo 3: posições 22-31, dígito 32
         String campo3 = linhaDigitavel.substring(21, 31);
         int digitoVerificadorCampo3 = Integer.parseInt(linhaDigitavel.substring(31, 32));
-        if (DigitoVerificador.calcularMod10(campo3) != digitoVerificadorCampo3) {
-            throw new ValidacaoException("Dígito verificador do campo 3 é inválido.");
+        int digitoCalculadoCampo3 = DigitoVerificador.modulo10(campo3);
+        if (digitoCalculadoCampo3 != digitoVerificadorCampo3) {
+            throw new ValidacaoException(String.format(
+                "Dígito verificador do campo 3 é inválido. Esperado: %d, Calculado: %d, Campo: %s, Linha completa: %s",
+                digitoVerificadorCampo3, digitoCalculadoCampo3, campo3, linhaDigitavel));
         }
     }
 
@@ -89,10 +108,12 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
         char digitoVerificadorGeral = codigoDeBarras.charAt(4);
         String dadosParaCalculo = codigoDeBarras.substring(0, 4) + codigoDeBarras.substring(5);
 
-        int digitoVerificadorCalculado = DigitoVerificador.calcularMod11(dadosParaCalculo);
+        int digitoVerificadorCalculado = DigitoVerificador.modulo11Bancario(dadosParaCalculo);
 
         if (digitoVerificadorCalculado != Character.getNumericValue(digitoVerificadorGeral)) {
-            throw new ValidacaoException("Dígito verificador geral do código de barras é inválido.");
+            throw new ValidacaoException(String.format(
+                "Dígito verificador geral do código de barras é inválido. Esperado: %c, Calculado: %d, Código: %s",
+                digitoVerificadorGeral, digitoVerificadorCalculado, codigoDeBarras));
         }
     }
 

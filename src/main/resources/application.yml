@@ -3,13 +3,25 @@ spring:
     name: ValidaBoleto
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/ValidaBoleto
+    url: jdbc:postgresql://localhost:5431/ValidaBoleto
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
     enabled: true
+
+server:
+  port: 8082
+  servlet:
+    context-path: /api
+
 
