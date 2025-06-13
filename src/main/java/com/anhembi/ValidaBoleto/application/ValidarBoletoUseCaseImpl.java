@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +42,6 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {    priva
             validarDVs(linhaDigitavelNumerica, boleto, erros);
             validarCodigoDeBarras(boleto, erros);
             validarBancoEmissorOficial(boleto, erros);
-            validarDataVencimento(boleto, erros);
             validarValor(boleto, erros, avisos);
             validarBancoEmissor(boleto, erros);
 
@@ -182,19 +180,6 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {    priva
         }
         if (!encontrado) {
             erros.add("Banco emissor não consta na lista oficial Febraban");
-        }
-    }
-
-    // Validação da data de vencimento (antiga ou muito futura)
-    private void validarDataVencimento(Boleto boleto, List<String> erros) {
-        if (boleto.getDataVencimento() != null) {
-            LocalDate hoje = LocalDate.now();
-            if (boleto.getDataVencimento().isBefore(hoje.minusYears(1))) {
-                erros.add("Data de vencimento muito antiga");
-            }
-            if (boleto.getDataVencimento().isAfter(hoje.plusYears(2))) {
-                erros.add("Data de vencimento muito distante no futuro");
-            }
         }
     }
 }
