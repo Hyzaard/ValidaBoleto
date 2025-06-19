@@ -22,8 +22,42 @@ public class UsuarioUseCaseImpl implements UsuarioUseCase {
 
     @Override
     public Usuario criar(Usuario usuario) throws ValidacaoException {
-        validarUsuario(usuario);
-        return usuarioGateway.salvar(usuario);
+        try {
+            // Validações básicas
+            if (usuario == null) {
+                throw new ValidacaoException("Usuário não pode ser nulo");
+            }
+            
+            if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
+                throw new ValidacaoException("Nome é obrigatório");
+            }
+            
+            if (usuario.getEmail() == null || usuario.getEmail().trim().isEmpty()) {
+                throw new ValidacaoException("Email é obrigatório");
+            }
+            
+            // Validação de formato de email
+            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+            if (!usuario.getEmail().matches(emailRegex)) {
+                throw new ValidacaoException("Formato de email inválido");
+            }
+            
+            // Verificar se email já existe
+            if (usuarioGateway.existePorEmail(usuario.getEmail())) {
+                throw new ValidacaoException("Email já está cadastrado");
+            }
+            
+            // Garantir que ID está nulo para criação
+            usuario = usuario.toBuilder().id(null).build();
+            
+            // Salvar usuário
+            return usuarioGateway.salvar(usuario);
+            
+        } catch (ValidacaoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ValidacaoException("Erro ao criar usuário: " + e.getMessage());
+        }
     }
 
     @Override

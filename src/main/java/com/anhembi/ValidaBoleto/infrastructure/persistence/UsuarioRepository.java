@@ -18,9 +18,24 @@ public class UsuarioRepository implements UsuarioGateway {
 
     @Override
     public Usuario salvar(Usuario usuario) {
-        UsuarioEntity entity = usuarioMapper.toEntity(usuario);
-        entity = jpaRepository.save(entity);
-        return usuarioMapper.toDomain(entity);
+        try {
+            // Converter para entidade
+            UsuarioEntity entity = usuarioMapper.toEntity(usuario);
+            
+            // Garantir que ID está nulo para nova entidade
+            if (entity.getId() == null) {
+                entity.setId(null);
+            }
+            
+            // Salvar no banco
+            UsuarioEntity entitySalva = jpaRepository.save(entity);
+            
+            // Converter de volta para domínio
+            return usuarioMapper.toDomain(entitySalva);
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao salvar usuário: " + e.getMessage(), e);
+        }
     }
 
     @Override

@@ -31,20 +31,55 @@ public class UsuarioController {
 
     @PostMapping
     public ResponseEntity<?> criar(@RequestBody UsuarioDto usuarioDto) {
-        if (usuarioDto == null) {
-            return ResponseEntity.badRequest().body("Dados do usuário não podem ser nulos");
-        }
-
         try {
-            var usuario = usuarioUseCase.criar(toDomain(usuarioDto));
-            return ResponseEntity.status(HttpStatus.CREATED).body(toDto(usuario));
+            // Validação básica
+            if (usuarioDto == null) {
+                return ResponseEntity.badRequest().body("Dados do usuário são obrigatórios");
+            }
+            
+            if (usuarioDto.getNome() == null || usuarioDto.getNome().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Nome é obrigatório");
+            }
+            
+            if (usuarioDto.getEmail() == null || usuarioDto.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Email é obrigatório");
+            }
+            
+            // Validação de formato de email
+            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+            if (!usuarioDto.getEmail().matches(emailRegex)) {
+                return ResponseEntity.badRequest().body("Formato de email inválido");
+            }
+            
+            // Criar usuário sem ID
+            Usuario usuario = Usuario.builder()
+                    .nome(usuarioDto.getNome().trim())
+                    .email(usuarioDto.getEmail().trim().toLowerCase())
+                    .resultadoUltimaValidacaoBoleto(usuarioDto.getResultadoUltimaValidacaoBoleto())
+                    .build();
+            
+            // Salvar usuário
+            Usuario usuarioSalvo = usuarioUseCase.criar(usuario);
+            
+            // Retornar resposta
+            UsuarioDto resposta = UsuarioDto.builder()
+                    .id(usuarioSalvo.getId())
+                    .nome(usuarioSalvo.getNome())
+                    .email(usuarioSalvo.getEmail())
+                    .resultadoUltimaValidacaoBoleto(usuarioSalvo.getResultadoUltimaValidacaoBoleto())
+                    .boletos(null)
+                    .build();
+            
+            return ResponseEntity.status(HttpStatus.CREATED).body(resposta);
+            
         } catch (ValidacaoException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao criar usuário: " + e.getMessage());
+                    .body("Erro interno do servidor: " + e.getMessage());
         }
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarPorId(@PathVariable Long id) {

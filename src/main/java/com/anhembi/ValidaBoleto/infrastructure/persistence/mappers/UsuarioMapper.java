@@ -21,13 +21,19 @@ public class UsuarioMapper {
 
     public UsuarioEntity toEntity(Usuario usuario) {
         if (usuario == null) return null;
+        
         UsuarioEntity entity = UsuarioEntity.builder()
-                .id(usuario.getId())
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
                 .resultadoUltimaValidacaoBoleto(usuario.getResultadoUltimaValidacaoBoleto())
                 .build();
-        // Mapear os boletos
+        
+        // Só seta o ID se não for nulo (para updates)
+        if (usuario.getId() != null) {
+            entity.setId(usuario.getId());
+        }
+        
+        // Mapear os boletos se existirem
         if (usuario.getBoletos() != null) {
             entity.setBoletos(usuario.getBoletos().stream()
                     .map(boletoMapper::toEntity)
@@ -35,6 +41,7 @@ public class UsuarioMapper {
             // Configurar o relacionamento bidirecional
             entity.getBoletos().forEach(boleto -> boleto.setUsuario(entity));
         }
+        
         return entity;
     }
 
@@ -84,7 +91,10 @@ public class UsuarioMapper {
         if (dto == null) return null;
         
         Usuario usuario = new Usuario();
-        usuario.setId(dto.getId());
+        // Só seta o ID se não for nulo
+        if (dto.getId() != null) {
+            usuario.setId(dto.getId());
+        }
         usuario.setNome(dto.getNome());
         usuario.setEmail(dto.getEmail());
         usuario.setResultadoUltimaValidacaoBoleto(dto.getResultadoUltimaValidacaoBoleto());
@@ -101,11 +111,15 @@ public class UsuarioMapper {
 
     public static UsuarioEntity toEntity(UsuarioDto dto) {
         if (dto == null) return null;
-        UsuarioEntity entity = new UsuarioEntity();
-        entity.setId(dto.getId());
-        entity.setNome(dto.getNome());
-        entity.setEmail(dto.getEmail());
-        entity.setResultadoUltimaValidacaoBoleto(dto.getResultadoUltimaValidacaoBoleto());
+        UsuarioEntity entity = UsuarioEntity.builder()
+            .nome(dto.getNome())
+            .email(dto.getEmail())
+            .resultadoUltimaValidacaoBoleto(dto.getResultadoUltimaValidacaoBoleto())
+            .build();
+        // Só seta o ID se não for nulo
+        if (dto.getId() != null) {
+            entity.setId(dto.getId());
+        }
         return entity;
     }
 }
