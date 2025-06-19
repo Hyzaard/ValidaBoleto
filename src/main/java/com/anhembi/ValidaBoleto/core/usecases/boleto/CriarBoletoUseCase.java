@@ -6,4 +6,6 @@ import com.anhembi.ValidaBoleto.infrastructure.exception.ValidacaoException;
 public interface CriarBoletoUseCase {
 
     public Boleto execute(Boleto boleto) throws ValidacaoException;
+    
+    public Boleto execute(Boleto boleto, Long usuarioId) throws ValidacaoException;
 }

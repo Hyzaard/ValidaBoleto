@@ -18,6 +18,15 @@ public class Usuario {
     private String cpf;
     private String telefone;
     private List<Boleto> boletos;
+    private String resultadoUltimaValidacaoBoleto;
+
+    public String getResultadoUltimaValidacaoBoleto() {
+        return resultadoUltimaValidacaoBoleto;
+    }
+
+    public void setResultadoUltimaValidacaoBoleto(String resultadoUltimaValidacaoBoleto) {
+        this.resultadoUltimaValidacaoBoleto = resultadoUltimaValidacaoBoleto;
+    }
 }
 
 

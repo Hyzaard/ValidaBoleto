@@ -14,11 +14,23 @@ import java.util.Optional;
 public class BoletoRepository implements BoletoGateway {
     
     private final JpaBoletoRepository jpaRepository;
+    private final JpaUsuarioRepository jpaUsuarioRepository;
     private final BoletoMapper boletoMapper;
 
     @Override
     public Boleto salvar(Boleto boleto) {
         BoletoEntity entity = boletoMapper.toEntity(boleto);
+        entity = jpaRepository.save(entity);
+        return boletoMapper.toDomain(entity);
+    }
+
+    public Boleto salvar(Boleto boleto, Long usuarioId) {
+        // Buscar a entidade do usuário
+        var usuarioEntity = jpaUsuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        
+        // Criar a entidade do boleto com o usuário
+        BoletoEntity entity = boletoMapper.toEntity(boleto, usuarioEntity);
         entity = jpaRepository.save(entity);
         return boletoMapper.toDomain(entity);
     }

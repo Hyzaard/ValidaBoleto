@@ -52,4 +52,8 @@ public class BoletoEntity {
 
     @Column(name = "observacao")
     private String observacao;
+
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private UsuarioEntity usuario;
 }

@@ -1,7 +1,9 @@
 package com.anhembi.ValidaBoleto.application;
 
 import com.anhembi.ValidaBoleto.adapters.BoletoGateway;
+import com.anhembi.ValidaBoleto.adapters.UsuarioGateway;
 import com.anhembi.ValidaBoleto.core.entities.Boleto;
+import com.anhembi.ValidaBoleto.core.entities.Usuario;
 import com.anhembi.ValidaBoleto.core.usecases.boleto.CriarBoletoUseCase;
 import com.anhembi.ValidaBoleto.infrastructure.exception.ValidacaoException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +13,12 @@ import org.springframework.stereotype.Service;
 public class CriarBoletoUseCaseImpl implements CriarBoletoUseCase {
 
     private final BoletoGateway boletoGateway;
+    private final UsuarioGateway usuarioGateway;
 
     @Autowired
-    public CriarBoletoUseCaseImpl(BoletoGateway boletoGateway) {
+    public CriarBoletoUseCaseImpl(BoletoGateway boletoGateway, UsuarioGateway usuarioGateway) {
         this.boletoGateway = boletoGateway;
+        this.usuarioGateway = usuarioGateway;
     }
 
     @Override
@@ -22,6 +26,20 @@ public class CriarBoletoUseCaseImpl implements CriarBoletoUseCase {
         try {
             validarBoleto(boleto);
             return boletoGateway.salvar(boleto);
+        } catch (Exception e) {
+            throw new ValidacaoException("Erro ao criar boleto: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Boleto execute(Boleto boleto, Long usuarioId) throws ValidacaoException {
+        try {
+            validarBoleto(boleto);
+            
+            // Salvar o boleto associado ao usuário
+            return boletoGateway.salvar(boleto, usuarioId);
+        } catch (ValidacaoException e) {
+            throw e;
         } catch (Exception e) {
             throw new ValidacaoException("Erro ao criar boleto: " + e.getMessage());
         }

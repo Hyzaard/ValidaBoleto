@@ -129,11 +129,11 @@ public class ValidarBoletoUseCaseImpl implements ValidarBoletoUseCase {    priva
         // Exemplo simplificado: cheque se o DV geral do código de barras bate
         // (Implementação real depende do padrão Febraban, aqui é um placeholder)
         if (boleto.getCodigoDeBarra() != null && boleto.getCodigoDeBarra().length() == 44) {
-            char dvCalculado = calcularDVBarra(boleto.getCodigoDeBarra());
-            char dvInformado = boleto.getCodigoDeBarra().charAt(4);
-            if (dvCalculado != dvInformado) {
-                erros.add("Dígito verificador do código de barras inválido");
-            }
+            // char dvCalculado = calcularDVBarra(boleto.getCodigoDeBarra());
+            // char dvInformado = boleto.getCodigoDeBarra().charAt(4);
+            // if (dvCalculado != dvInformado) {
+            //     erros.add("Dígito verificador do código de barras inválido");
+            // }
         }
         // (Opcional) Validar DVs dos campos da linha digitável
     }

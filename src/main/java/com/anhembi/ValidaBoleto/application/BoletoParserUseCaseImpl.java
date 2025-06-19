@@ -43,17 +43,12 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
 
         // Reconstrói o código de barras a partir da linha digitável
         String codigoDeBarra = construirCodigoDeBarra(linhaDigitavelNumerica);
-        System.out.println("[DEBUG] Codigo de Barras: " + codigoDeBarra);
         String fatorStr = codigoDeBarra.substring(5, 9);
-        System.out.println("[DEBUG] Fator de Vencimento extraído: " + fatorStr);
 
         LocalDate dataVencimento = null;
         if (!"0000".equals(fatorStr)) {
             int fatorVencimento = Integer.parseInt(fatorStr);
             dataVencimento = DATA_BASE_FATOR_VENCIMENTO.plusDays(fatorVencimento);
-            System.out.println("[DEBUG] Data de Vencimento calculada: " + dataVencimento);
-        } else {
-            System.out.println("[DEBUG] Boleto sem data de vencimento (fator 0000)");
         }
 
         BigDecimal valor = new BigDecimal(codigoDeBarra.substring(9, 19)).divide(new BigDecimal(100));
@@ -68,15 +63,17 @@ public class BoletoParserUseCaseImpl implements BoletoParserUseCase {
 
     private String construirCodigoDeBarra(String linhaDigitavel) {
         // Padrão Febraban para boletos bancários (47 dígitos):
-        // 0-3: banco/moeda
-        // 4: dígito verificador geral
-        // 5-8: fator de vencimento
-        // 9-18: valor
-        // 19-43: campo livre
-        // Montagem: 0-3 + 32 + 33-36 + 37-46 + 4-8 + 10-19 + 21-30
+        // Campo 1: 0-9 (9 dígitos)
+        // Campo 2: 10-20 (11 dígitos)
+        // Campo 3: 21-31 (11 dígitos)
+        // Campo 4: 32 (DV geral)
+        // Campo 5: 33-46 (14 dígitos: fator de vencimento + valor)
+        // Montagem: 0-3 + 3 + 33-36 + 37-46 + 4-8 + 10-19 + 21-30
+        // Correto: banco(0-2) + moeda(3) + DV(32) + fator(33-36) + valor(37-46) + campo livre(4-8,10-19,21-30)
         return new StringBuilder()
-            .append(linhaDigitavel, 0, 4)    // banco e moeda
-            .append(linhaDigitavel, 32, 33)  // dígito verificador geral
+            .append(linhaDigitavel, 0, 3)    // banco
+            .append(linhaDigitavel, 3, 4)    // moeda
+            .append(linhaDigitavel, 32, 33)  // DV geral
             .append(linhaDigitavel, 33, 37)  // fator de vencimento
             .append(linhaDigitavel, 37, 47)  // valor
             .append(linhaDigitavel, 4, 9)    // campo livre parte 1

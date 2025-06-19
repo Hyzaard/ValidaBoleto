@@ -4,6 +4,7 @@ import com.anhembi.ValidaBoleto.core.entities.Usuario;
 import com.anhembi.ValidaBoleto.core.usecases.usuario.UsuarioUseCase;
 import com.anhembi.ValidaBoleto.infrastructure.dtos.UsuarioDto;
 import com.anhembi.ValidaBoleto.infrastructure.exception.ValidacaoException;
+import com.anhembi.ValidaBoleto.infrastructure.persistence.mappers.UsuarioMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,10 +18,12 @@ import java.util.stream.Collectors;
 public class UsuarioController {
 
     private final UsuarioUseCase usuarioUseCase;
+    private final UsuarioMapper usuarioMapper;
 
     @Autowired
-    public UsuarioController(UsuarioUseCase usuarioUseCase) {
+    public UsuarioController(UsuarioUseCase usuarioUseCase, UsuarioMapper usuarioMapper) {
         this.usuarioUseCase = usuarioUseCase;
+        this.usuarioMapper = usuarioMapper;
     }
 
     @PostMapping
@@ -107,18 +110,10 @@ public class UsuarioController {
     }
 
     private UsuarioDto toDto(Usuario usuario) {
-        return UsuarioDto.builder()
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .build();
+        return usuarioMapper.toDto(usuario);
     }
 
     private Usuario toDomain(UsuarioDto dto) {
-        return Usuario.builder()
-                .id(dto.getId())
-                .nome(dto.getNome())
-                .email(dto.getEmail())
-                .build();
+        return usuarioMapper.toDomain(dto);
     }
 } 
