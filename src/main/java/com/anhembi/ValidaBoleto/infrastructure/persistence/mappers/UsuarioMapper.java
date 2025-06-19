@@ -28,7 +28,7 @@ public class UsuarioMapper {
                 .resultadoUltimaValidacaoBoleto(usuario.getResultadoUltimaValidacaoBoleto())
                 .build();
         
-        // Só seta o ID se não for nulo (para updates)
+        // Seta o ID se existir (para updates) ou deixa nulo (para criação)
         if (usuario.getId() != null) {
             entity.setId(usuario.getId());
         }

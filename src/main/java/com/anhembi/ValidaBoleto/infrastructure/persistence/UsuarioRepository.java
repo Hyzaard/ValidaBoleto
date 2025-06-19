@@ -22,12 +22,7 @@ public class UsuarioRepository implements UsuarioGateway {
             // Converter para entidade
             UsuarioEntity entity = usuarioMapper.toEntity(usuario);
             
-            // Garantir que ID está nulo para nova entidade
-            if (entity.getId() == null) {
-                entity.setId(null);
-            }
-            
-            // Salvar no banco
+            // Salvar no banco (JPA decide se é insert ou update baseado no ID)
             UsuarioEntity entitySalva = jpaRepository.save(entity);
             
             // Converter de volta para domínio

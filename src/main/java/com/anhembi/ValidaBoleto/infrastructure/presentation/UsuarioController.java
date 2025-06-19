@@ -129,21 +129,58 @@ public class UsuarioController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody UsuarioDto usuarioDto) {
-        if (id == null || id <= 0) {
-            return ResponseEntity.badRequest().body("ID inválido");
-        }
-        if (usuarioDto == null) {
-            return ResponseEntity.badRequest().body("Dados do usuário não podem ser nulos");
-        }
-
         try {
-            var usuario = usuarioUseCase.atualizar(id, toDomain(usuarioDto));
-            return ResponseEntity.ok(toDto(usuario));
+            // Validação do ID
+            if (id == null || id <= 0) {
+                return ResponseEntity.badRequest().body("ID do usuário é obrigatório e deve ser maior que zero");
+            }
+            
+            // Validação do DTO
+            if (usuarioDto == null) {
+                return ResponseEntity.badRequest().body("Dados do usuário são obrigatórios");
+            }
+            
+            if (usuarioDto.getNome() == null || usuarioDto.getNome().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Nome é obrigatório");
+            }
+            
+            if (usuarioDto.getEmail() == null || usuarioDto.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Email é obrigatório");
+            }
+            
+            // Validação de formato de email
+            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+            if (!usuarioDto.getEmail().matches(emailRegex)) {
+                return ResponseEntity.badRequest().body("Formato de email inválido");
+            }
+            
+            // Criar usuário com ID para atualização
+            Usuario usuario = Usuario.builder()
+                    .id(id)
+                    .nome(usuarioDto.getNome().trim())
+                    .email(usuarioDto.getEmail().trim().toLowerCase())
+                    .resultadoUltimaValidacaoBoleto(usuarioDto.getResultadoUltimaValidacaoBoleto())
+                    .build();
+            
+            // Atualizar usuário
+            Usuario usuarioAtualizado = usuarioUseCase.atualizar(id, usuario);
+            
+            // Retornar resposta
+            UsuarioDto resposta = UsuarioDto.builder()
+                    .id(usuarioAtualizado.getId())
+                    .nome(usuarioAtualizado.getNome())
+                    .email(usuarioAtualizado.getEmail())
+                    .resultadoUltimaValidacaoBoleto(usuarioAtualizado.getResultadoUltimaValidacaoBoleto())
+                    .boletos(null)
+                    .build();
+            
+            return ResponseEntity.ok(resposta);
+            
         } catch (ValidacaoException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao atualizar usuário: " + e.getMessage());
+                    .body("Erro interno do servidor: " + e.getMessage());
         }
     }
 

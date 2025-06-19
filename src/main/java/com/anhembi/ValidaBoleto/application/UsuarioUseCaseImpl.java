@@ -80,12 +80,53 @@ public class UsuarioUseCaseImpl implements UsuarioUseCase {
 
     @Override
     public Usuario atualizar(Long id, Usuario usuario) throws ValidacaoException {
-        if (!usuarioGateway.buscarPorId(id).isPresent()) {
-            throw new ValidacaoException("Usuário não encontrado");
+        try {
+            // Validações básicas
+            if (id == null || id <= 0) {
+                throw new ValidacaoException("ID do usuário é obrigatório e deve ser maior que zero");
+            }
+            
+            if (usuario == null) {
+                throw new ValidacaoException("Usuário não pode ser nulo");
+            }
+            
+            if (usuario.getNome() == null || usuario.getNome().trim().isEmpty()) {
+                throw new ValidacaoException("Nome é obrigatório");
+            }
+            
+            if (usuario.getEmail() == null || usuario.getEmail().trim().isEmpty()) {
+                throw new ValidacaoException("Email é obrigatório");
+            }
+            
+            // Validação de formato de email
+            String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+            if (!usuario.getEmail().matches(emailRegex)) {
+                throw new ValidacaoException("Formato de email inválido");
+            }
+            
+            // Verificar se usuário existe
+            Optional<Usuario> usuarioExistente = usuarioGateway.buscarPorId(id);
+            if (usuarioExistente.isEmpty()) {
+                throw new ValidacaoException("Usuário não encontrado");
+            }
+            
+            // Verificar se email já existe (exceto para o próprio usuário)
+            if (usuarioGateway.existePorEmail(usuario.getEmail()) && 
+                !usuarioExistente.get().getEmail().equals(usuario.getEmail())) {
+                throw new ValidacaoException("Email já está cadastrado por outro usuário");
+            }
+            
+            // Garantir que o ID está correto
+            usuario = usuario.toBuilder().id(id).build();
+            
+            // Atualizar usuário
+            return usuarioGateway.salvar(usuario);
+            
+        } catch (ValidacaoException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ValidacaoException("Erro ao atualizar usuário: " + e.getMessage());
         }
-        validarUsuario(usuario);
-        usuario = usuario.toBuilder().id(id).build();
-        return usuarioGateway.salvar(usuario);
     }
 
     private void validarUsuario(Usuario usuario) throws ValidacaoException {
