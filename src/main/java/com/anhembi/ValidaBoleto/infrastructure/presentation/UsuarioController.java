@@ -1,6 +1,7 @@
 package com.anhembi.ValidaBoleto.infrastructure.presentation;
 
 import com.anhembi.ValidaBoleto.core.entities.Usuario;
+import com.anhembi.ValidaBoleto.core.entities.Boleto;
 import com.anhembi.ValidaBoleto.core.usecases.usuario.UsuarioUseCase;
 import com.anhembi.ValidaBoleto.infrastructure.dtos.UsuarioDto;
 import com.anhembi.ValidaBoleto.infrastructure.exception.ValidacaoException;
@@ -19,11 +20,13 @@ public class UsuarioController {
 
     private final UsuarioUseCase usuarioUseCase;
     private final UsuarioMapper usuarioMapper;
+    private final com.anhembi.ValidaBoleto.core.usecases.boleto.ValidarBoletoUseCase validarBoletoUseCase;
 
     @Autowired
-    public UsuarioController(UsuarioUseCase usuarioUseCase, UsuarioMapper usuarioMapper) {
+    public UsuarioController(UsuarioUseCase usuarioUseCase, UsuarioMapper usuarioMapper, com.anhembi.ValidaBoleto.core.usecases.boleto.ValidarBoletoUseCase validarBoletoUseCase) {
         this.usuarioUseCase = usuarioUseCase;
         this.usuarioMapper = usuarioMapper;
+        this.validarBoletoUseCase = validarBoletoUseCase;
     }
 
     @PostMapping
@@ -106,6 +109,41 @@ public class UsuarioController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erro ao atualizar usuário: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/{usuarioId}/validar-boleto")
+    public ResponseEntity<?> validarBoletoParaUsuario(
+            @PathVariable Long usuarioId,
+            @RequestBody com.anhembi.ValidaBoleto.infrastructure.dtos.LinhaDigitavelDto linhaDigitavelDto) {
+        if (linhaDigitavelDto == null || linhaDigitavelDto.getLinhaDigitavel() == null || linhaDigitavelDto.getLinhaDigitavel().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Linha digitável é obrigatória");
+        }
+        try {
+            // Valida o boleto
+            Boleto boleto = validarBoletoUseCase.validacao(linhaDigitavelDto.getLinhaDigitavel());
+
+            // Serializa o resultado da validação
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+            String resultadoJson = mapper.writeValueAsString(boleto);
+
+            // Busca e atualiza o usuário
+            var usuarioOpt = usuarioUseCase.buscarPorId(usuarioId);
+            if (usuarioOpt.isEmpty()) {
+                return ResponseEntity.badRequest().body("Usuário não encontrado");
+            }
+            var usuario = usuarioOpt.get();
+            usuario.setResultadoUltimaValidacaoBoleto(resultadoJson);
+            usuarioUseCase.atualizar(usuarioId, usuario);
+
+            // Retorna o usuário atualizado (DTO)
+            UsuarioDto usuarioDto = usuarioMapper.toDto(usuario);
+            return ResponseEntity.ok(usuarioDto);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro ao validar e salvar resultado do boleto: " + e.getMessage());
         }
     }
 

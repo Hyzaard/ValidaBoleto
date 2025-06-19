@@ -69,7 +69,10 @@ public class UsuarioUseCaseImpl implements UsuarioUseCase {
         if (!usuario.getEmail().matches(emailRegex)) {
             throw new ValidacaoException("Email inválido");
         }
-        if (usuarioGateway.existePorEmail(usuario.getEmail())) {
+        // Permitir atualizar o próprio usuário sem erro de e-mail já cadastrado
+        Optional<Usuario> usuarioExistente = usuarioGateway.buscarPorId(usuario.getId());
+        if (usuarioGateway.existePorEmail(usuario.getEmail()) &&
+            (!usuarioExistente.isPresent() || !usuarioExistente.get().getEmail().equals(usuario.getEmail()))) {
             throw new ValidacaoException("Email já cadastrado");
         }
     }
